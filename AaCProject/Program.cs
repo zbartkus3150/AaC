@@ -28,29 +28,43 @@ namespace AaCProject
             }
             while (!(int.TryParse(line, out r)));
 
-            //List<List<int>> resultBrute = BruteForce(initialSet, r);
+            List<List<int>> resultBrute = BruteForce(initialSet, r);
             List<List<int>> resultHeuristic = Heuristic(initialSet, r);
 
             Console.WriteLine("Brute Force solution:");
-            //Console.WriteLine(resultBrute.ToString());
-            //Console.WriteLine("Initial fitness function value: {0}", Fitness(resultBrute));
-            //Console.WriteLine("Second fitness function value: {0}", MyFitness(resultBrute, r));
+            PrintSolution(resultBrute);
+            Console.WriteLine("Initial fitness function value: {0}", Fitness(resultBrute));
+            Console.WriteLine("Second fitness function value: {0}", MyFitness(resultBrute, r));
             Console.WriteLine();
             Console.WriteLine("Heuristic solution:");
             PrintSolution(resultHeuristic);
             Console.WriteLine("Initial fitness function value: {0}", Fitness(resultHeuristic));
             Console.WriteLine("Second fitness function value: {0}", MyFitness(resultHeuristic, r));
+
+            Console.WriteLine();
+            Console.WriteLine("Partitions:");
+            List<List<List<int>>> testBrute = GeneratePartitions(initialSet, r);
+            foreach(List<List<int>> l in testBrute)
+            {
+                PrintSolution(l);
+                Console.WriteLine();
+            }
+
         }
 
         public static List<List<int>> BruteForce(List<int> initialSet, int r)
         {
-            List<List<List<int>>> allSets = GeneratePartitions(initialSet, r);
+            List<int> initialCopy = new List<int>(initialSet);
+            List<List<List<int>>> allSets = GeneratePartitions(initialCopy, r);
             int bestIndex = 0;
             int tmp = initialSet.Sum();
             foreach (List<List<int>> list in allSets)
             {
                 if (Fitness(list) < tmp)
+                {
                     bestIndex = allSets.IndexOf(list);
+                    tmp = Fitness(list);
+                }
             }
             return allSets[bestIndex];
         }
@@ -60,12 +74,15 @@ namespace AaCProject
             List<List<List<int>>> allSets = new List<List<List<int>>>();
             if(r == 1)
             {
+                List<List<List<int>>> singleSol = new List<List<List<int>>>();
                 List<List<int>> l = new List<List<int>>();
                 l.Add(initialSet);
-                allSets.Add(l);
+                singleSol.Add(l);
+                return singleSol;
             }
             else if(r == initialSet.Count())
             {
+                List<List<List<int>>> singleSol = new List<List<List<int>>>();
                 List<List<int>> Sp = new List<List<int>>();
                 foreach(int elem in initialSet)
                 {
@@ -73,7 +90,8 @@ namespace AaCProject
                     p.Add(elem);
                     Sp.Add(p);
                 }
-                allSets.Add(Sp);
+                singleSol.Add(Sp);
+                return singleSol;
             }
             else
             {
@@ -84,15 +102,23 @@ namespace AaCProject
                 {
                     foreach(List<int> sub in p)
                     {
-                        List<int> pp = sub;
-                        pp.Add(s1);
-                        //TODO
+                        List<List<int>> pp = new List<List<int>>();
+                        foreach (List<int> subp in p)
+                        {
+                            List<int> copy = new List<int>(subp);
+                            pp.Add(copy);
+                        }
+                        pp.ElementAt(p.IndexOf(sub)).Add(s1);
+                        allSets.Add(pp);
                     }
                 }
                 List<List<List<int>>> Spp = GeneratePartitions(initialSet, r-1);
                 foreach(List<List<int>> p in Spp)
                 {
-                    //TODO
+                    List<int> pp = new List<int>();
+                    pp.Add(s1);
+                    p.Add(pp);
+                    allSets.Add(p);
                 }
             }
             return allSets;
@@ -100,7 +126,7 @@ namespace AaCProject
 
         public static List<List<int>> Heuristic(List<int> initialSet, int r)
         {
-            List<int> sorted = initialSet;
+            List<int> sorted = new List<int>(initialSet);
             List<List<int>> result = new List<List<int>>();
             for(int i=0; i< r; i++)
             {
@@ -157,10 +183,10 @@ namespace AaCProject
             foreach(List<int> set in solution)
             {
                 Console.Write("{");
-                foreach(int elem in set)
+                for(int i=0; i < set.Count(); i++)
                 {
-                    Console.Write(elem);
-                    if (!(set.Count() == set.IndexOf(elem) + 1))
+                    Console.Write(set[i]);
+                    if (!(set.Count() == i + 1))
                         Console.Write(", ");
                 }
                 Console.Write("}");
