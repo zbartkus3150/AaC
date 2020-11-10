@@ -1,0 +1,7 @@
+C:\Users\zbartkus\source\repos\AaCProject\AaCProject\bin\Debug\AaCProject.exe.config
+C:\Users\zbartkus\source\repos\AaCProject\AaCProject\bin\Debug\AaCProject.exe
+C:\Users\zbartkus\source\repos\AaCProject\AaCProject\bin\Debug\AaCProject.pdb
+C:\Users\zbartkus\source\repos\AaCProject\AaCProject\obj\Debug\AaCProject.csprojAssemblyReference.cache
+C:\Users\zbartkus\source\repos\AaCProject\AaCProject\obj\Debug\AaCProject.csproj.CoreCompileInputs.cache
+C:\Users\zbartkus\source\repos\AaCProject\AaCProject\obj\Debug\AaCProject.exe
+C:\Users\zbartkus\source\repos\AaCProject\AaCProject\obj\Debug\AaCProject.pdb

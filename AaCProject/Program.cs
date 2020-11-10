@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace AaCProject
 {
@@ -16,14 +15,14 @@ namespace AaCProject
             {
                 do
                 {
-                    Console.WriteLine("Input 0 for text file input or 1 for console input:");
+                    Console.WriteLine("Input 1 for text file input or 2 for console input:");
                     line = Console.ReadLine();
                 }
                 while (!(int.TryParse(line, out option)));
             }
-            while (option != 0 && option != 1);
+            while (option != 1 && option != 2);
 
-            if(option == 0)
+            if(option == 1)
             {
                 FileInput();
             }
@@ -31,21 +30,38 @@ namespace AaCProject
             {
                 ConsoleInput();
             }
-
+            Console.WriteLine("Press Enter to exit");
+            Console.ReadLine();
         }
 
         public static void ConsoleInput()
         {
+            Stopwatch sw = new Stopwatch();
             List<int> initialSet = new List<int>();
             int r;
             Console.WriteLine("Input weights:");
             string line = Console.ReadLine();
-            string[] numbers = line.Split(' ');
-            foreach (string number in numbers)
+            string[] numbers = line.Split(',');
+            if (numbers.Length == 1)
             {
+                Random rnd = new Random();
                 int n;
-                if (int.TryParse(number, out n))
-                    initialSet.Add(n);
+                if (int.TryParse(numbers[0], out n))
+                {
+                    for (int i = 0; i < n; i++)
+                    {
+                        initialSet.Add(rnd.Next(n * 4));
+                    }
+                }
+            }
+            else
+            {
+                foreach (string number in numbers)
+                {
+                    int n;
+                    if (int.TryParse(number, out n))
+                        initialSet.Add(n);
+                }
             }
             do
             {
@@ -53,38 +69,99 @@ namespace AaCProject
                 line = Console.ReadLine();
             }
             while (!(int.TryParse(line, out r)));
+            Console.WriteLine("Type 1 for optimal solution, 2 for heurisctic solution or 3 for both:");
+            string o = Console.ReadLine();
 
-            List<List<int>> resultBrute = BruteForce(initialSet, r, Fitness);
-            List<List<int>> resultHeuristic = Heuristic(initialSet, r);
-
-            Console.WriteLine("Brute Force solution:");
-            PrintSolution(resultBrute);
-            Console.WriteLine("Initial fitness function value: {0}", Fitness(resultBrute, r));
-            Console.WriteLine("Second fitness function value: {0}", MyFitness(resultBrute, r));
-            Console.WriteLine();
-            Console.WriteLine("Heuristic solution:");
-            PrintSolution(resultHeuristic);
-            Console.WriteLine("Initial fitness function value: {0}", Fitness(resultHeuristic, r));
-            Console.WriteLine("Second fitness function value: {0}", MyFitness(resultHeuristic, r));
-
-            Console.WriteLine();
-            Console.WriteLine("Partitions:");
-            List<List<List<int>>> testBrute = GeneratePartitions(initialSet, r);
-            foreach (List<List<int>> l in testBrute)
+            double timeBrute;
+            double timeHeuristic;
+            List<List<int>> resultBrute = new List<List<int>>();
+            List<List<int>> resultHeuristic = new List<List<int>>();
+            if (o == "1" || o == "3")
             {
-                PrintSolution(l);
+                Console.WriteLine("Type 1 to use first fitness function of 2 for the second one:");
+                string f = Console.ReadLine();
+                if(f == "1")
+                {
+                    sw.Restart();
+                    resultBrute = BruteForce(initialSet, r, Fitness);
+                    timeBrute = sw.Elapsed.TotalMilliseconds;
+                    sw.Stop();
+                }
+                else
+                {
+                    sw.Restart();
+                    resultBrute = BruteForce(initialSet, r, MyFitness);
+                    timeBrute = sw.Elapsed.TotalMilliseconds;
+                    sw.Stop();
+                }
+                Console.WriteLine("Brute Force solution:");
+                PrintSolution(resultBrute);
+                Console.WriteLine("Initial fitness function value: {0}", Fitness(resultBrute, r));
+                Console.WriteLine("Second fitness function value: {0}", MyFitness(resultBrute, r));
+                Console.WriteLine("Time needed: " + timeBrute + " miliseconds");
+            }
+            if (o == "2" || o == "3")
+            {
+                sw.Restart();
+                resultHeuristic = Heuristic(initialSet, r);
+                timeHeuristic = sw.Elapsed.TotalMilliseconds;
+                sw.Stop();
+                Console.WriteLine("Heuristic solution:");
+                PrintSolution(resultHeuristic);
+                Console.WriteLine("Initial fitness function value: {0}", Fitness(resultHeuristic, r));
+                Console.WriteLine("Second fitness function value: {0}", MyFitness(resultHeuristic, r));
+                Console.WriteLine("Time needed: " + timeHeuristic + " miliseconds");
+            }
+            Console.WriteLine();
+
+
+            if (o == "1" || o == "3")
+            {
                 Console.WriteLine();
+                Console.WriteLine("Print partitions? (y/n)");
+                string response = Console.ReadLine();
+                if (response == "y")
+                {
+                    Console.WriteLine("All partitions:");
+                    List<List<List<int>>> testBrute = GeneratePartitions(initialSet, r);
+                    foreach (List<List<int>> l in testBrute)
+                    {
+                        PrintSolution(l);
+                        Console.WriteLine();
+                    }
+                }
             }
         } 
 
         public static void FileInput()
         {
             List<int> initialSet = new List<int>();
-            int r;
             Console.WriteLine("Input file name:");
             string fileName = Console.ReadLine();
-            string[] lines = System.IO.File.ReadAllLines(fileName);
-            if(lines.Length != 4)
+            List<string> alllines = new List<string>();
+            try
+            {
+                alllines = System.IO.File.ReadAllLines(fileName).ToList();
+            }
+            catch (Exception e) {
+                Console.WriteLine("Invalid file name");
+                return;
+            }
+            string[] lines;
+            while (alllines.Count() >= 4)
+            {
+                lines = alllines.GetRange(0, 4).ToArray();
+                FileInputParse(lines, initialSet);
+                alllines.RemoveRange(0, 4);
+                initialSet.Clear();
+            }
+        }
+
+        public static void FileInputParse(string[] lines, List<int> initialSet)
+        {
+            Stopwatch sw = new Stopwatch();
+            int r;
+            if (lines.Length != 4)
             {
                 Console.WriteLine("Invalid input!");
             }
@@ -98,7 +175,7 @@ namespace AaCProject
                 if (lines[3].Contains(','))
                 {
                     string[] weights = lines[3].Split(',');
-                    foreach(string w in weights)
+                    foreach (string w in weights)
                     {
                         int number;
                         if (int.TryParse(w, out number))
@@ -111,36 +188,52 @@ namespace AaCProject
                     if (int.TryParse(lines[3], out size))
                     {
                         Random rnd = new Random();
-                        for (int i=0; i< size; i++)
+                        for (int i = 0; i < size; i++)
                         {
                             initialSet.Add(rnd.Next(size * 4));
                         }
                     }
                 }
-                if(lines[1] == "o")
+                Console.WriteLine();
+                Console.WriteLine("------------------------------------------------------------");
+                Console.WriteLine();
+                double time;
+                if (lines[1] == "o")
                 {
+                    Console.WriteLine("Brute force solution:");
                     List<List<int>> resultBrute = new List<List<int>>();
                     if (lines[2] == "1")
                     {
+                        sw.Restart();
                         resultBrute = BruteForce(initialSet, r, Fitness);
+                        time = sw.Elapsed.TotalMilliseconds;
                         PrintSolution(resultBrute);
                         Console.WriteLine("Initial fitness function value: {0}", Fitness(resultBrute, r));
                     }
                     else
                     {
+                        sw.Restart();
                         resultBrute = BruteForce(initialSet, r, MyFitness);
+                        time = sw.Elapsed.TotalMilliseconds;
                         PrintSolution(resultBrute);
                         Console.WriteLine("Second fitness function value: {0}", MyFitness(resultBrute, r));
                     }
+                    Console.WriteLine("Time needed: " + time + " miliseconds");
+                    sw.Stop();
                 }
-                else if(lines[1] == "h")
+                else if (lines[1] == "h")
                 {
+                    Console.WriteLine("Heuristic solution:");
+                    sw.Restart();
                     List<List<int>> resultHeuristic = Heuristic(initialSet, r);
+                    time = sw.Elapsed.TotalMilliseconds;
                     PrintSolution(resultHeuristic);
-                    if(lines[2] == "1")
+                    if (lines[2] == "1")
                         Console.WriteLine("Initial fitness function value: {0}", Fitness(resultHeuristic, r));
                     else
                         Console.WriteLine("Second fitness function value: {0}", MyFitness(resultHeuristic, r));
+                    Console.WriteLine("Time needed: " + time + " miliseconds");
+                    sw.Stop();
                 }
                 else
                 {
@@ -148,6 +241,7 @@ namespace AaCProject
                 }
             }
         }
+
 
         public static List<List<int>> BruteForce(List<int> initialSet, int r, Func<List<List<int>>, int, int> fitness)
         {
